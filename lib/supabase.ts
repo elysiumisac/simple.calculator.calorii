@@ -34,7 +34,39 @@ export async function saveEntry(entry: FoodEntry) {
   } : null
 }
 
+// Funcție pentru a obține intrările din ziua curentă
+export async function getTodayEntries() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Începutul zilei curente
+  
+  const { data, error } = await supabase
+    .from('food_entries')
+    .select('*')
+    .gte('timestamp', today.toISOString())
+    .order('timestamp', { ascending: false });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  
+  return data ? data.map(entry => ({
+    id: entry.id,
+    foodName: entry.food_name,
+    calories: entry.calories,
+    description: entry.description,
+    imageUrl: entry.image_url,
+    timestamp: entry.timestamp
+  })) : [];
+}
+
+// Funcție pentru a calcula totalul caloriilor din ziua curentă
+export async function getTodayTotalCalories() {
+  const todayEntries = await getTodayEntries();
+  return todayEntries.reduce((total, entry) => total + entry.calories, 0);
+}
+
 export async function getEntries() {
+  // Resetăm istoricul pentru a fi curat pentru fiecare utilizator nou
   const { data, error } = await supabase
     .from('food_entries')
     .select('*')

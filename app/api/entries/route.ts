@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { saveEntry, getEntries } from '../../../lib/supabase'
+import { saveEntry, getEntries, getTodayEntries, getTodayTotalCalories } from '../../../lib/supabase'
 import { FoodEntry } from '../../../lib/types'
 
 export async function GET() {
   try {
-    const entries = await getEntries()
-    return NextResponse.json(entries)
+    const entries = await getTodayEntries() // Folosim doar intrările din ziua curentă
+    const totalCalories = await getTodayTotalCalories() // Calculăm totalul caloriilor pentru ziua curentă
+    return NextResponse.json({
+      entries,
+      totalCalories
+    })
   } catch (error) {
     console.error('Error fetching entries:', error)
     return NextResponse.json(

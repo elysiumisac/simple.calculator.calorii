@@ -9,6 +9,7 @@ export default function Home() {
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [analysisResult, setAnalysisResult] = useState<FoodEntry | null>(null)
   const [foodEntries, setFoodEntries] = useState<FoodEntry[]>([])
+  const [totalCalories, setTotalCalories] = useState<number>(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -18,7 +19,8 @@ export default function Home() {
         const response = await fetch('/api/entries')
         if (response.ok) {
           const data = await response.json()
-          setFoodEntries(data)
+          setFoodEntries(data.entries)
+          setTotalCalories(data.totalCalories)
         }
       } catch (error) {
         console.error('Error fetching entries:', error)
@@ -90,7 +92,9 @@ export default function Home() {
       }
 
       const savedEntry = await response.json()
+      // Actualizăm lista de intrări și totalul de calorii
       setFoodEntries([savedEntry, ...foodEntries])
+      setTotalCalories(prevTotal => prevTotal + savedEntry.calories)
       
       // Reset the form
       setImagePreview(null)
@@ -173,7 +177,13 @@ export default function Home() {
         </div>
 
         <div className="card">
-          <h2 className="text-xl font-semibold mb-4">Intrări Recente</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Intrări Recente</h2>
+            <div className="bg-green-100 text-green-800 px-4 py-2 rounded-lg">
+              <p className="font-semibold">Astăzi ai consumat:</p>
+              <p className="text-xl text-center font-bold">{totalCalories} kcal</p>
+            </div>
+          </div>
           
           {foodEntries.length === 0 ? (
             <p className="text-gray-500 italic">Nicio intrare încă. Încarcă o poză pentru a începe!</p>

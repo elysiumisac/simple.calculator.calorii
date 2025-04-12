@@ -65,6 +65,23 @@ export async function getTodayTotalCalories() {
   return todayEntries.reduce((total, entry) => total + entry.calories, 0);
 }
 
+// Funcție pentru ștergerea tuturor intrărilor din ziua curentă
+export async function deleteTodayEntries() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Începutul zilei curente
+  
+  const { error } = await supabase
+    .from('food_entries')
+    .delete()
+    .gte('timestamp', today.toISOString());
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  
+  return { success: true };
+}
+
 export async function getEntries() {
   // Resetăm istoricul pentru a fi curat pentru fiecare utilizator nou
   const { data, error } = await supabase

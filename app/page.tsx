@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import { FoodEntry } from '../lib/types'
+import { FaTrash } from 'react-icons/fa'
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false)
@@ -10,7 +11,33 @@ export default function Home() {
   const [analysisResult, setAnalysisResult] = useState<FoodEntry | null>(null)
   const [foodEntries, setFoodEntries] = useState<FoodEntry[]>([])
   const [totalCalories, setTotalCalories] = useState<number>(0)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Funcție pentru gestionarea ștergerii tuturor intrărilor
+  const handleDeleteEntries = async () => {
+    setIsDeleting(true)
+    try {
+      const response = await fetch('/api/entries/delete', {
+        method: 'DELETE',
+      })
+      
+      if (response.ok) {
+        // Resetăm lista de intrări și totalul de calorii
+        setFoodEntries([])
+        setTotalCalories(0)
+        setShowDeleteConfirm(false)
+      } else {
+        alert('A apărut o eroare la ștergerea intrărilor.')
+      }
+    } catch (error) {
+      console.error('Error deleting entries:', error)
+      alert('A apărut o eroare la ștergerea intrărilor.')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
 
   useEffect(() => {
     // Fetch existing entries when component mounts
@@ -178,7 +205,16 @@ export default function Home() {
 
         <div className="card">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Intrări Recente</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-semibold">Intrări Recente</h2>
+              <button 
+                onClick={() => setShowDeleteConfirm(true)} 
+                className="p-2 text-red-500 hover:bg-red-100 rounded-full transition-colors"
+                title="Șterge toate intrările"
+              >
+                <FaTrash />
+              </button>
+            </div>
             <div className="bg-green-100 text-green-800 px-4 py-2 rounded-lg">
               <p className="font-semibold">Astăzi ai consumat:</p>
               <p className="text-xl text-center font-bold">{totalCalories} kcal</p>
@@ -207,6 +243,35 @@ export default function Home() {
           )}
         </div>
       </div>
+
+      {/* Dialog de confirmare pentru ștergere */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold mb-4">Confirmare</h3>
+            <p className="mb-6">Ești sigur că îți dorești să ștergi tot istoricul tău?</p>
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setShowDeleteConfirm(false)} 
+                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100"
+                disabled={isDeleting}
+              >
+                Anulare
+              </button>
+              <button 
+                onClick={handleDeleteEntries} 
+                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 flex items-center gap-2"
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Se șterge...' : 'Șterge'}
+                {isDeleting && (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
